@@ -2,7 +2,6 @@
 #include "Arduino.h"
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
-#include "TimerOne.h"
 
 void printDetail(uint8_t type, int value);
 
