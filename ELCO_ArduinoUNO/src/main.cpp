@@ -28,7 +28,7 @@ void setup() {
 
     attachInterrupt(digitalPinToInterrupt(BOTONNUMEROS), numerosElegidoISR, FALLING);
     attachInterrupt(digitalPinToInterrupt(BOTONLETRAS), letrasElegidoISR, FALLING);
-    attachInterrupt(digitalPinToInterrupt(BOTONREPETIR), repetirISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONREPETIR), repetirElegidoISR, FALLING);
 
     // Inicializar los botones de cada matriz led
     pinMode(BOTONMATRIZ1, INPUT_PULLUP);
@@ -80,7 +80,7 @@ letrasElegidoISR(){
 }
 
 static void
-repetirISR(){
+repetirElegidoISR(){
     fsm_data->flags.repetirCaracter = 1;
 }
 

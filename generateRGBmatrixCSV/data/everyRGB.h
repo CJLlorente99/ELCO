@@ -10,7 +10,6 @@
 #include Uminus.h
 #include numero4.h
 #include Lmayus.h
-#include Ñminus.h
 #include Aminus.h
 #include Eminus.h
 #include Smayus.h
@@ -57,4 +56,3 @@
 #include Tmayus.h
 #include numero1.h
 #include numero3.h
-#include Ñmayus.h

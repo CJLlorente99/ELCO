@@ -6,6 +6,7 @@ static DFRobotDFPlayerMini myDFPlayer;
 void playNum(int num);
 void playLetter(int num);
 void rellenarMatrizPulsada(fsm_data_t* fsm_data);
+void cambiarEstadoMatrices(fsm_data_t* fsm_data);
 
 /* Guards */
 static int
@@ -199,9 +200,9 @@ cambiarEstadoMatrices(fsm_data_t* fsm_data){
         matrizLED_t matriz = fsm_data->matricesLED[i];
         int caracterASCII = matriz.caracterARepresentar;
         if(caracterASCII >= 65){ // es una letra
-            csvName = strcat((char*)caracterASCII,"mayus");
+            csvName = strcat((char*)&caracterASCII,"mayus");
         } else{
-            csvName = strcat("numero",(char*)caracterASCII);
+            csvName = strcat("numero",(char*)&caracterASCII);
         }
 
         CSV_Parser cp(csvName, /*format*/ "LLLLL");
