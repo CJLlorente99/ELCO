@@ -22,6 +22,8 @@ static void botonMatriz4ISR();
 void setup() {
     Serial.begin(115200);
 
+    // Arrancar una semilla aleatoria
+
     pinMode(BOTONNUMEROS, INPUT_PULLUP);
     pinMode(BOTONLETRAS, INPUT_PULLUP);
     pinMode(BOTONREPETIR, INPUT_PULLUP);

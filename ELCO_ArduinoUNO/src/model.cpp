@@ -74,6 +74,9 @@ initJuegoNumeros(fsm_t* fsm){
     int matriz = rand()%4;
     fsm_data->matrizCorrecta = matriz;
 
+    // TODO
+    // El numero no puede ser identico al que aparece en cualquier otra matriz
+
     int num;
     for(int i = 0; i < 4; i++){
         if(i == fsm_data->matrizCorrecta){
@@ -83,8 +86,7 @@ initJuegoNumeros(fsm_t* fsm){
             {
                 num = rand()%10 + 48;
             } while (num == fsm_data->caracterElegido);
-            
-            
+             
             fsm_data->matricesLED[i].caracterARepresentar = num;
         }
     }
@@ -168,6 +170,11 @@ fsm_t* new_ELCO_fsm(fsm_data_t* fsm_data){
     Serial.println(F("DFPlayer Mini online."));
 
     myDFPlayer.volume(20);  //Set volume value. From 0 to 30
+
+    // TODO
+    // transición de juego a juego si es incorrecto
+    // en el futuro, si aciertas, volver a estado juego para hacer otra ronda
+    // transición de un juego a otro si se pulsa el otro boton
 
     fsm_trans_t tt[] = {
         {IDLE, juegoNumerosElegido, JUEGONUMEROS, initJuegoNumeros},
