@@ -1,8 +1,7 @@
 #include "model.h"
 
-#define BOTONNUMEROS    1
-#define BOTONLETRAS     2
-#define BOTONREPETIR    3
+#define BOTONREPETIR    1
+#define BOTONNUEVOJUEGO 2
 #define BOTONMATRIZ1    4
 #define BOTONMATRIZ2    5
 #define BOTONMATRIZ3    6
@@ -11,26 +10,25 @@
 fsm_t* fsm;
 fsm_data_t* fsm_data;
 
-static void numerosElegidoISR();
-static void letrasElegidoISR();
 static void repetirElegidoISR();
+static void nuevoJuegoISR();
 static void botonMatriz1ISR();
 static void botonMatriz2ISR();
 static void botonMatriz3ISR();
 static void botonMatriz4ISR();
+
+void refrescarMatrices(fsm_data_t data);
 
 void setup() {
     Serial.begin(115200);
 
     // Arrancar una semilla aleatoria
 
-    pinMode(BOTONNUMEROS, INPUT_PULLUP);
-    pinMode(BOTONLETRAS, INPUT_PULLUP);
     pinMode(BOTONREPETIR, INPUT_PULLUP);
+    pinMode(BOTONNUEVOJUEGO, INPUT_PULLUP);
 
-    attachInterrupt(digitalPinToInterrupt(BOTONNUMEROS), numerosElegidoISR, FALLING);
-    attachInterrupt(digitalPinToInterrupt(BOTONLETRAS), letrasElegidoISR, FALLING);
     attachInterrupt(digitalPinToInterrupt(BOTONREPETIR), repetirElegidoISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONNUEVOJUEGO), nuevoJuegoISR, FALLING);
 
     // Inicializar los botones de cada matriz led
     pinMode(BOTONMATRIZ1, INPUT_PULLUP);
@@ -59,31 +57,32 @@ void loop() {
 
     Serial.println("Entering infinite loop");
 
-    unsigned long lastMillis = millis();
+    unsigned long lastMillisFSM = millis();
+    unsigned long lastMillisLED = millis();
     unsigned long actMillis;
 
     while(1){
         actMillis = millis();
-        if(actMillis - lastMillis >= 100){
-            lastMillis = millis();
+        if(actMillis - lastMillisFSM >= 100){
+            lastMillisFSM = millis();
             fsm_fire(fsm);
+        }
+        if(actMillis - lastMillisLED >= 50){
+            lastMillisLED = millis();
+            refrescarMatrices(*fsm_data);
         }
     }
 }
 
-static void
-numerosElegidoISR(){
-    fsm_data->flags.numerosElegido = 1;
-}
-
-static void
-letrasElegidoISR(){
-    fsm_data->flags.letrasElegido = 1;
-}
-
+/* ISR de los botones */
 static void
 repetirElegidoISR(){
     fsm_data->flags.repetirCaracter = 1;
+}
+
+static void
+nuevoJuegoISR(){
+    fsm_data->flags.nuevoJuego = 1;
 }
 
 static void
@@ -104,4 +103,12 @@ botonMatriz3ISR(){
 static void
 botonMatriz4ISR(){
     fsm_data->ultimoBotonPulsado = BOTONMATRIZ4;
+}
+
+/* Funcion para refrescar las matrices en base a lo que hay dentro de fsm_data */
+void
+refrescarMatrices(fsm_data_t data){
+    matrizLED_t* matrices = data.matricesLED;
+
+    // TODO
 }

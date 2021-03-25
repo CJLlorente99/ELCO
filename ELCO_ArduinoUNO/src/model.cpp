@@ -10,12 +10,17 @@ void cambiarEstadoMatrices(fsm_data_t* fsm_data);
 
 /* Guards */
 static int
+siempre1(fsm_t* fsm){
+    return 1;
+}
+
+static int
 juegoNumerosElegido(fsm_t* fsm){
     fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
     int res = 0;
 
     noInterrupts();
-    if(fsm_data->flags.numerosElegido)
+    if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[0].numBoton)
         res = 1;
     interrupts();
 
@@ -28,7 +33,7 @@ juegoLetrasElegido(fsm_t* fsm){
     int res = 0;
 
     noInterrupts();
-    if(fsm_data->flags.letrasElegido)
+    if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[1].numBoton)
         res = 1;
     interrupts();
 
@@ -49,12 +54,50 @@ repetirCaracter(fsm_t* fsm){
 }
 
 static int
-matrizPulsada(fsm_t* fsm){
+matrizPulsadaCorrecta(fsm_t* fsm){
     fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
     int res = 0;
 
     noInterrupts();
-    if(fsm_data->ultimoBotonPulsado != 0)
+    if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton)
+        res = 1;
+    interrupts();
+
+    return res;
+}
+
+static int
+matrizPulsadaIncorrecta(fsm_t* fsm){
+    fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
+    int res = 0;
+
+    noInterrupts();
+    if(fsm_data->ultimoBotonPulsado != fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton && fsm_data->ultimoBotonPulsado != 0)
+        res = 1;
+    interrupts();
+
+    return res;
+}
+
+static int
+tiempoCumplido(fsm_t* fsm){
+    fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
+    int res = 0;
+
+    if(fsm_data->timeout >= millis()){
+        res = 1;
+    }
+
+    return res;
+}
+
+static int
+nuevoJuego(fsm_t* fsm){
+    fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
+    int res = 0;
+
+    noInterrupts();
+    if(fsm_data->flags.nuevoJuego)
         res = 1;
     interrupts();
 
@@ -62,6 +105,22 @@ matrizPulsada(fsm_t* fsm){
 }
 
 /* Transition functions */
+static void
+initEleccion(fsm_t* fsm){
+    fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
+
+    fsm_data->matricesLED[0].caracterARepresentar = rand()%10 + 48;
+    fsm_data->matricesLED[1].caracterARepresentar = rand()%26 + 65;
+    fsm_data->matricesLED[2].caracterARepresentar = 0;
+    fsm_data->matricesLED[3].caracterARepresentar = 0;
+
+    cambiarEstadoMatrices(fsm_data);
+
+    noInterrupts();
+    fsm_data->flags.nuevoJuego = 0;
+    interrupts();
+}
+
 static void
 initJuegoNumeros(fsm_t* fsm){
     fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
@@ -94,7 +153,7 @@ initJuegoNumeros(fsm_t* fsm){
     cambiarEstadoMatrices(fsm_data);
 
     noInterrupts();
-    fsm_data->flags.numerosElegido = 0;
+    fsm_data->ultimoBotonPulsado = 0;
     interrupts();
 }
 
@@ -126,7 +185,7 @@ initJuegoLetras(fsm_t* fsm){
     cambiarEstadoMatrices(fsm_data);
 
     noInterrupts();
-    fsm_data->flags.letrasElegido = 0;
+    fsm_data->ultimoBotonPulsado = 0;
     interrupts();
 }
 
@@ -144,7 +203,20 @@ playCaracter(fsm_t* fsm){
 //TODO
 // poner a verde o rojo segun corresponda
 static void
-pintarMatriz(fsm_t* fsm){
+pintarMatrizCorrecta(fsm_t* fsm){
+    fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
+
+    rellenarMatrizPulsada(fsm_data);
+
+    fsm_data->timeout = millis() + TIMEOUTCORRECTO;
+
+    noInterrupts();
+    fsm_data->ultimoBotonPulsado = 0;
+    interrupts();
+}
+
+static void
+pintarMatrizIncorrecta(fsm_t* fsm){
     fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
 
     rellenarMatrizPulsada(fsm_data);
@@ -174,15 +246,27 @@ fsm_t* new_ELCO_fsm(fsm_data_t* fsm_data){
     // TODO
     // transición de juego a juego si es incorrecto
     // en el futuro, si aciertas, volver a estado juego para hacer otra ronda
-    // transición de un juego a otro si se pulsa el otro boton
+    // estado idle muestra un numero y una letra a partir de la cual eliges
+    // para volver a idle pulsar boton reset
 
     fsm_trans_t tt[] = {
-        {IDLE, juegoNumerosElegido, JUEGONUMEROS, initJuegoNumeros},
-        {IDLE, juegoLetrasElegido, JUEGOLETRAS, initJuegoLetras},
+        {IDLE, siempre1, ELECCION, initEleccion},
+        {ELECCION, juegoNumerosElegido, JUEGONUMEROS, initJuegoNumeros},
+        {ELECCION, juegoLetrasElegido, JUEGOLETRAS, initJuegoLetras},
         {JUEGONUMEROS, repetirCaracter, JUEGONUMEROS, playCaracter},
-        {JUEGONUMEROS, matrizPulsada, IDLE, pintarMatriz},
+        {JUEGONUMEROS, matrizPulsadaIncorrecta, JUEGONUMEROS, pintarMatrizIncorrecta},
+        {JUEGONUMEROS, matrizPulsadaCorrecta, ESPERANUMEROS, pintarMatrizCorrecta},
+        {ESPERANUMEROS, tiempoCumplido, JUEGONUMEROS, initJuegoNumeros},
         {JUEGOLETRAS, repetirCaracter, JUEGOLETRAS, playCaracter},
-        {JUEGOLETRAS, matrizPulsada, IDLE, pintarMatriz},
+        {JUEGOLETRAS, matrizPulsadaIncorrecta, JUEGOLETRAS, pintarMatrizIncorrecta},
+        {JUEGOLETRAS, matrizPulsadaCorrecta, ESPERALETRAS, pintarMatrizCorrecta},
+        {ESPERALETRAS, tiempoCumplido, JUEGOLETRAS, initJuegoLetras},
+        /* NUEVO JUEGO */
+        {ELECCION, nuevoJuego, ELECCION, initEleccion},
+        {JUEGONUMEROS, nuevoJuego, ELECCION, initEleccion},
+        {ESPERANUMEROS, nuevoJuego, ELECCION, initEleccion},
+        {JUEGOLETRAS, nuevoJuego, ELECCION, initEleccion},
+        {ESPERALETRAS, nuevoJuego, ELECCION, initEleccion},
         {-1, NULL, -1, NULL}
     };  
     
@@ -198,29 +282,35 @@ playNum(int num){
 void
 cambiarEstadoMatrices(fsm_data_t* fsm_data){
     char* csvName;
-    int32_t* WidthIndex;
-    int32_t* HeightIndex;
+    int32_t* widthIndex;
+    int32_t* heightIndex;
+    int32_t* brightness;
     int32_t* R;
     int32_t* G;
     int32_t* B;
     for(int i = 0; i < 4; i++){
         matrizLED_t matriz = fsm_data->matricesLED[i];
         int caracterASCII = matriz.caracterARepresentar;
-        if(caracterASCII >= 65){ // es una letra
+        if(caracterASCII == 0){
+            csvName = "nada";
+        } else if(caracterASCII >= 65){ // es una letra
             csvName = strcat((char*)&caracterASCII,"mayus");
         } else{
             csvName = strcat("numero",(char*)&caracterASCII);
         }
 
+        // TODO
+        // manage brightness array
         CSV_Parser cp(csvName, /*format*/ "LLLLL");
-        WidthIndex = (int32_t*)cp["WIDTHINDEX"];
-        HeightIndex = (int32_t*)cp["HEIGHTINDEX"];
+        widthIndex = (int32_t*)cp["WIDTHINDEX"];
+        heightIndex = (int32_t*)cp["HEIGHTINDEX"];
+        brightness = (int32_t*)cp["BRIGHTNESS"];
         R = (int32_t*)cp["RED"];
         G = (int32_t*)cp["GREEN"];
         B = (int32_t*)cp["BLUE"];
 
-        memcpy(&matriz.WidthIndex, &WidthIndex, 64*sizeof(int32_t));
-        memcpy(&matriz.HeightIndex, &HeightIndex, 64*sizeof(int32_t));
+        memcpy(&matriz.widthIndex, &widthIndex, 64*sizeof(int32_t));
+        memcpy(&matriz.heightIndex, &heightIndex, 64*sizeof(int32_t));
         memcpy(&matriz.R,&R, 64*sizeof(int32_t));
         memcpy(&matriz.G,&G, 64*sizeof(int32_t));
         memcpy(&matriz.B,&B, 64*sizeof(int32_t));
@@ -232,11 +322,18 @@ rellenarMatrizPulsada(fsm_data_t* fsm_data){
     int ultBoton = fsm_data->ultimoBotonPulsado;
 
     if(ultBoton == fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton){
-        // TODO
-        // rellenar en verde lo que estaba en blanco o poner directamente todo a verde
+        memset(&fsm_data->matricesLED[fsm_data->matrizCorrecta].brightness, BRIGHTNESSVERDE, 64*sizeof(int));
+        memset(&fsm_data->matricesLED[fsm_data->matrizCorrecta].R, RVERDE, 64*sizeof(int));
+        memset(&fsm_data->matricesLED[fsm_data->matrizCorrecta].G, GVERDE, 64*sizeof(int));
+        memset(&fsm_data->matricesLED[fsm_data->matrizCorrecta].B, BVERDE, 64*sizeof(int));
     } else {
-        // TODO
-        // ver a que matriz pertenece el boton pulsado
-        // rellenar en rojo lo que estaba en blanco o poner directamente todo a rojo
+        for(int i = 0; i < 4; i++){
+            if(ultBoton == fsm_data->matricesLED[i].numBoton){
+                memset(&fsm_data->matricesLED[i].brightness, BRIGHTNESSROJO, 64*sizeof(int));
+                memset(&fsm_data->matricesLED[i].R, RROJO, 64*sizeof(int));
+                memset(&fsm_data->matricesLED[i].G, GROJO, 64*sizeof(int));
+                memset(&fsm_data->matricesLED[i].B, BROJO, 64*sizeof(int));
+            }
+        }
     }
 }
