@@ -1,6 +1,11 @@
 #include "model.h"
+#include "allRGB.h"
 
-SoftwareSerial mySoftwareSerial(2, 3); // RX, TX
+#if defined(ESP32)
+HardwareSerial dfSerial(1);
+#else
+SoftwareSerial dfSerial(2, 3); // RX, TX
+#endif
 static DFRobotDFPlayerMini myDFPlayer;
 
 void playNum(int num);
@@ -228,12 +233,12 @@ pintarMatrizIncorrecta(fsm_t* fsm){
 
 /* FSM init function */
 fsm_t* new_ELCO_fsm(fsm_data_t* fsm_data){
-    mySoftwareSerial.begin(9600);
+    dfSerial.begin(9600);
 
     Serial.println();
     Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
 
-    if (!myDFPlayer.begin(mySoftwareSerial)) {  //Use softwareSerial to communicate with mp3.
+    if (!myDFPlayer.begin(dfSerial)) {  //Use softwareSerial to communicate with mp3.
     Serial.println(F("Unable to begin:"));
     Serial.println(F("1.Please recheck the connection!"));
     Serial.println(F("2.Please insert the SD card!"));
@@ -281,7 +286,7 @@ playNum(int num){
 
 void
 cambiarEstadoMatrices(fsm_data_t* fsm_data){
-    char* csvName;
+    const char* csvName;
     int32_t* widthIndex;
     int32_t* heightIndex;
     int32_t* brightness;
@@ -291,12 +296,13 @@ cambiarEstadoMatrices(fsm_data_t* fsm_data){
     for(int i = 0; i < 4; i++){
         matrizLED_t matriz = fsm_data->matricesLED[i];
         int caracterASCII = matriz.caracterARepresentar;
+        char* ascii = (char*)caracterASCII;
         if(caracterASCII == 0){
             csvName = "nada";
         } else if(caracterASCII >= 65){ // es una letra
-            csvName = strcat((char*)&caracterASCII,"mayus");
+            csvName = strcat(ascii, "mayus");
         } else{
-            csvName = strcat("numero",(char*)&caracterASCII);
+            csvName = strcat("numero", ascii);
         }
 
         // TODO
@@ -311,6 +317,7 @@ cambiarEstadoMatrices(fsm_data_t* fsm_data){
 
         memcpy(&matriz.widthIndex, &widthIndex, 64*sizeof(int32_t));
         memcpy(&matriz.heightIndex, &heightIndex, 64*sizeof(int32_t));
+        memcpy(&matriz.brightness, &brightness, 64*sizeof(int32_t));
         memcpy(&matriz.R,&R, 64*sizeof(int32_t));
         memcpy(&matriz.G,&G, 64*sizeof(int32_t));
         memcpy(&matriz.B,&B, 64*sizeof(int32_t));

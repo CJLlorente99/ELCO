@@ -1,12 +1,16 @@
 #include "fsm.h"
-#include "allRGB.h"
 #include "Arduino.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 #include "CSV_Parser.h"
+
+#if defined(ESP32) 
+#include "HardwareSerial.h"
+#else
+#include "SoftwareSerial.h"
 #include "SD.h"
+#endif
 
 #define TIMEOUTCORRECTO     1000
 
