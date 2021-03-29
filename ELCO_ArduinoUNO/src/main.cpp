@@ -1,13 +1,16 @@
 #include "model.h"
 
+/*  En Arduino Uno podemos usar SW serial, en ESP32 no */
 #if defined(ESP32)
-HardwareSerial dfPlayerSerial(2); // pines 16 y 17
+    HardwareSerial dfPlayerSerial(2); // pines 16 y 17
 #else
-SoftwareSerial dfPlayerSerial(2, 3); // RX, TX
+    SoftwareSerial dfPlayerSerial(2, 3); // RX, TX
 #endif
+
 static DFRobotDFPlayerMini myDFPlayer;
 
-// Ver si tienen disponible internal pullup
+/*  Numero de los GPIO de los botones
+    Considerar que los botones deben poder ponerse en modo pullup */
 #define BOTONREPETIR    18
 #define BOTONNUEVOJUEGO 14
 #define BOTONMATRIZ1    23
@@ -15,9 +18,7 @@ static DFRobotDFPlayerMini myDFPlayer;
 #define BOTONMATRIZ3    21
 #define BOTONMATRIZ4    19
 
-static fsm_t* fsm;
-fsm_data_t* fsm_data;
-
+/*  Declaracion de las ISR de los botones */
 static void repetirElegidoISR();
 static void nuevoJuegoISR();
 static void botonMatriz1ISR();
@@ -25,16 +26,22 @@ static void botonMatriz2ISR();
 static void botonMatriz3ISR();
 static void botonMatriz4ISR();
 
+/*  Declaracion de otras funciones que se utilizan */
 void refrescarMatrices(fsm_data_t data);
 void playNum(int num);
 void playLetter(int num);
 void rellenarMatrizPulsada(fsm_data_t* fsm_data);
 void cambiarEstadoMatrices(fsm_data_t* fsm_data);
 
-void setup() {
-    delay(2000);
-    Serial.begin(115200);
+static fsm_t* fsm;
+fsm_data_t* fsm_data;
 
+void setup() {
+    /*  Delay para "llegar" a ver el monitor serie desde el principio */
+    delay(2000);
+
+    /*  Iniciar comunicacion serial con el portatil y la que va a ser usada con el DFPlayer */
+    Serial.begin(115200);
     dfPlayerSerial.begin(9600, SERIAL_8N1, 16, 17);
 
     // Serial.println();
@@ -50,21 +57,20 @@ void setup() {
 
     // myDFPlayer.volume(20);  //Set volume value. From 0 to 30
 
-    // Arrancar una semilla aleatoria
+    /*  Arrancar una semilla aleatoria */
     randomSeed(millis());
 
+    /*  Inicializacion de los botones que van a ser usados
+        Al estar en modo pullup el estado normal es nivel alto, bajando a nivel bajo cuando se presionen */
     pinMode(BOTONREPETIR, INPUT_PULLUP);
     pinMode(BOTONNUEVOJUEGO, INPUT_PULLUP);
-
-    attachInterrupt(digitalPinToInterrupt(BOTONREPETIR), repetirElegidoISR, FALLING);
-    attachInterrupt(digitalPinToInterrupt(BOTONNUEVOJUEGO), nuevoJuegoISR, FALLING);
-
-    // Inicializar los botones de cada matriz led
     pinMode(BOTONMATRIZ1, INPUT_PULLUP);
     pinMode(BOTONMATRIZ2, INPUT_PULLUP);
     pinMode(BOTONMATRIZ3, INPUT_PULLUP);
     pinMode(BOTONMATRIZ4, INPUT_PULLUP);
 
+    attachInterrupt(digitalPinToInterrupt(BOTONREPETIR), repetirElegidoISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONNUEVOJUEGO), nuevoJuegoISR, FALLING);
     attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ1), botonMatriz1ISR, FALLING);
     attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ2), botonMatriz2ISR, FALLING);
     attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ3), botonMatriz3ISR, FALLING);
@@ -72,11 +78,11 @@ void setup() {
 }
 
 void loop() {
+    /*  Inicializacion de la estructura de datos que se usa en la maquina de estados
+        Todo a cero excepto el numero de boton de cada matriz */
     fsm_data = (fsm_data_t*)malloc(sizeof(fsm_data_t));
     memset(fsm_data, 0, sizeof(fsm_data_t));
-    // fsm_data->matricesLED = (matrizLED_t*)malloc(4*sizeof(matrizLED_t));
 
-    // rellenar la info necesaria en fsm_data->matricesLED, si procede
     fsm_data->matricesLED[0].numBoton = BOTONMATRIZ1;
     fsm_data->matricesLED[1].numBoton = BOTONMATRIZ2;
     fsm_data->matricesLED[2].numBoton = BOTONMATRIZ3;
@@ -107,6 +113,10 @@ void loop() {
 
     Serial.println("Entering infinite loop");
 
+    /*  Un "reloj"  para llamar a la maquina de estados y a la funcion de refresco */
+
+    // TODO
+    // Creo que en esp32 se puede hacer con timers 
     unsigned long lastMillisFSM = millis();
     unsigned long lastMillisLED = millis();
     unsigned long actMillis;
@@ -124,7 +134,7 @@ void loop() {
     }
 }
 
-/* ISR de los botones */
+/*  ISR de los botones */
 ISR_HEADER
 repetirElegidoISR(){
     fsm_data->flags.repetirCaracter = 1;
@@ -155,7 +165,7 @@ botonMatriz4ISR(){
     fsm_data->ultimoBotonPulsado = BOTONMATRIZ4;
 }
 
-/* Funcion para refrescar las matrices en base a lo que hay dentro de fsm_data */
+/*  Funcion para refrescar las matrices en base a lo que hay dentro de fsm_data */
 void
 refrescarMatrices(fsm_data_t data){
     matrizLED_t* matrices = data.matricesLED;
@@ -163,7 +173,13 @@ refrescarMatrices(fsm_data_t data){
     // TODO
 }
 
-/* Guards */
+/*********************************************************************************************/
+/*********************************************************************************************/
+/**************************IMPLEMENTACION DE LA MAQUINA DE ESTADOS****************************/
+/*********************************************************************************************/
+/*********************************************************************************************/
+
+/*  Guards */
 static int
 siempre1(fsm_t* fsm){
     return 1;
@@ -290,15 +306,11 @@ initJuegoNumeros(fsm_t* fsm){
 
     playNum(fsm_data->caracterElegido);
 
-    // Asignar aleatoriamente un numero a cada matriz, siendo uno el correcto
     int matriz = random(3);
     fsm_data->matrizCorrecta = matriz;
 
     Serial.print("La matriz correcta es ");
     Serial.println(matriz);
-
-    // TODO
-    // El numero no puede ser identico al que aparece en cualquier otra matriz
 
     int num;
     int caracteresElegidos[4];
@@ -344,7 +356,6 @@ initJuegoLetras(fsm_t* fsm){
     Serial.print(" que es el  ");
     Serial.println(ascii);
 
-    // Asignar aleatoriamente un numero a cada matriz, siendo uno el correcto
     int matriz = random(3);
     fsm_data->matrizCorrecta = matriz;
 
@@ -423,6 +434,14 @@ playNum(int num){
     // myDFPlayer.play(num);
 }
 
+/*********************************************************************************************/
+/*********************************************************************************************/
+/*************************************FUNCIONES AUXILIARES************************************/
+/*********************************************************************************************/
+/*********************************************************************************************/
+
+/*  A partir del numero que debe mostrarse en cada momento, se actualizan los valores de las
+    estructuras matrizLED_t */
 void
 cambiarEstadoMatrices(fsm_data_t* fsm_data){
     String csvName;
@@ -466,6 +485,8 @@ cambiarEstadoMatrices(fsm_data_t* fsm_data){
     }
 }
 
+/*  Se rellena toda la matriz de color verde o rojo dependiendo si se ha pulsado la matriz correcta 
+    o incorrecta */
 void
 rellenarMatrizPulsada(fsm_data_t* fsm_data){
     int ultBoton = fsm_data->ultimoBotonPulsado;

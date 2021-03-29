@@ -8,22 +8,23 @@
 #include "CSV_Parser.h"
 
 #if defined(ESP32) 
-#include "HardwareSerial.h"
+    #include "HardwareSerial.h"
 #else
-#include "SoftwareSerial.h"
-#include "SD.h"
+    #include "SoftwareSerial.h"
+    #include "SD.h"
 #endif
 
-#define TIMEOUTCORRECTO     1000
+/*  Tiempo que se muestra la matriz coloreada en verde antes de pasar a un nuevo juego */
+#define TIMEOUTCORRECTO     3000
 
-// Header for ISR
+/*  En ESP32 se recomienda guardar los ISR en la memoria RAM en vez de en la flash */
 #if defined(ESP32) 
     #define ISR_HEADER static void IRAM_ATTR
 #else
     #define ISR_HEADER static void
 #endif
 
-// Colores para respuesta correcta o incorrecta
+/*  Colores para respuesta correcta o incorrecta */
 #define BRIGHTNESSVERDE     0
 #define RVERDE  0
 #define GVERDE  187
@@ -34,6 +35,7 @@
 #define GROJO   0
 #define BROJO   0
 
+/*  Estados de la FSM */
 enum states{
     IDLE,
     ELECCION,
@@ -43,10 +45,12 @@ enum states{
     ESPERALETRAS
 };
 
+/*  Declaracion de tipos utiles */
 typedef struct fsm_data_s fsm_data_t;
 typedef struct flags_s flags_t;
 typedef struct matrizLED_s matrizLED_t;
 
+/*  Definicion de tipos utiles */
 struct flags_s{
     volatile int repetirCaracter;
     volatile int nuevoJuego;
@@ -72,6 +76,7 @@ struct fsm_data_s{
     matrizLED_t matricesLED[4];
 };
 
+/*  Instanciacion de todos las guardas y funciones de transición */
 static int siempre1(fsm_t* fsm);
 static int juegoNumerosElegido(fsm_t* fsm);
 static int juegoLetrasElegido(fsm_t* fsm);
