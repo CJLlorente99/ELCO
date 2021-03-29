@@ -2,6 +2,8 @@
 #include "Arduino.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <algorithm>
 #include "DFRobotDFPlayerMini.h"
 #include "CSV_Parser.h"
 
@@ -13,6 +15,13 @@
 #endif
 
 #define TIMEOUTCORRECTO     1000
+
+// Header for ISR
+#if defined(ESP32) 
+    #define ISR_HEADER static void IRAM_ATTR
+#else
+    #define ISR_HEADER static void
+#endif
 
 // Colores para respuesta correcta o incorrecta
 #define BRIGHTNESSVERDE     0
@@ -39,8 +48,8 @@ typedef struct flags_s flags_t;
 typedef struct matrizLED_s matrizLED_t;
 
 struct flags_s{
-    volatile int repetirCaracter : 1;
-    volatile int nuevoJuego : 1;
+    volatile int repetirCaracter;
+    volatile int nuevoJuego;
 };
 
 struct matrizLED_s{
@@ -56,11 +65,24 @@ struct matrizLED_s{
 
 struct fsm_data_s{
     flags_t flags;
-    int caracterElegido;
-    int matrizCorrecta;
-    int ultimoBotonPulsado;
+    long caracterElegido;
+    long matrizCorrecta;
+    volatile int ultimoBotonPulsado;
     uint32_t timeout;
     matrizLED_t matricesLED[4];
 };
 
-fsm_t* new_ELCO_fsm(fsm_data_t* fsm_data);
+static int siempre1(fsm_t* fsm);
+static int juegoNumerosElegido(fsm_t* fsm);
+static int juegoLetrasElegido(fsm_t* fsm);
+static int repetirCaracter(fsm_t* fsm);
+static int matrizPulsadaCorrecta(fsm_t* fsm);
+static int matrizPulsadaIncorrecta(fsm_t* fsm);
+static int tiempoCumplido(fsm_t* fsm);
+static int nuevoJuego(fsm_t* fsm);
+static void initEleccion(fsm_t* fsm);
+static void initJuegoNumeros(fsm_t* fsm);
+static void initJuegoLetras(fsm_t* fsm);
+static void playCaracter(fsm_t* fsm);
+static void pintarMatrizCorrecta(fsm_t* fsm);
+static void pintarMatrizIncorrecta(fsm_t* fsm);
