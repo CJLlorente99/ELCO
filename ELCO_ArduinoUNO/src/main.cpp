@@ -28,10 +28,10 @@ static void botonMatriz4ISR();
 
 /*  Declaracion de otras funciones que se utilizan */
 void refrescarMatrices(fsm_data_t data);
-void playNum(int num);
-void playLetter(int num);
+void playNum(int num, int language);
 void rellenarMatrizPulsada(fsm_data_t* fsm_data);
 void cambiarEstadoMatrices(fsm_data_t* fsm_data);
+int numeroNoRepetido(int elegidos[4], int num);
 
 static fsm_t* fsm;
 fsm_data_t* fsm_data;
@@ -42,20 +42,21 @@ void setup() {
 
     /*  Iniciar comunicacion serial con el portatil y la que va a ser usada con el DFPlayer */
     Serial.begin(115200);
-    dfPlayerSerial.begin(9600, SERIAL_8N1, 16, 17);
+    #if defined(ESP32)
+        dfPlayerSerial.begin(9600, SERIAL_8N1, 16, 17);
+    #endif
 
-    // Serial.println();
-    // Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+    Serial.println();
+    Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
 
-    // if (!myDFPlayer.begin(dfPlayerSerial)) {  //Use softwareSerial to communicate with mp3.
-    // Serial.println(F("Unable to begin:"));
-    // Serial.println(F("1.Please recheck the connection!"));
-    // Serial.println(F("2.Please insert the SD card!"));
-    // while(true);
-    // }
-    // Serial.println(F("DFPlayer Mini online."));
+    while(!myDFPlayer.begin(dfPlayerSerial)) {  //Use softwareSerial to communicate with mp3.
+        Serial.println(F("Unable to begin:"));
+        Serial.println(F("1.Please recheck the connection!"));
+        Serial.println(F("2.Please insert the SD card!"));
+    }
+    Serial.println(F("DFPlayer Mini online."));
 
-    // myDFPlayer.volume(20);  //Set volume value. From 0 to 30
+    myDFPlayer.volume(20);  //Set volume value. From 0 to 30
 
     /*  Arrancar una semilla aleatoria */
     randomSeed(millis());
@@ -89,9 +90,10 @@ void loop() {
     fsm_data->matricesLED[3].numBoton = BOTONMATRIZ4;
 
     fsm_trans_t tt[] = {
-        {IDLE, siempre1, ELECCION, initEleccion},
-        {ELECCION, juegoNumerosElegido, JUEGONUMEROS, initJuegoNumeros},
-        {ELECCION, juegoLetrasElegido, JUEGOLETRAS, initJuegoLetras},
+        {IDLE, siempre1, ELECCIONLENGUAJE, initEleccionLenguaje},
+        {ELECCIONLENGUAJE, lenguajeElegido, ELECCIONJUEGO, initEleccionJuego},
+        {ELECCIONJUEGO, juegoNumerosElegido, JUEGONUMEROS, initJuegoNumeros},
+        {ELECCIONJUEGO, juegoLetrasElegido, JUEGOLETRAS, initJuegoLetras},
         {JUEGONUMEROS, repetirCaracter, JUEGONUMEROS, playCaracter},
         {JUEGONUMEROS, matrizPulsadaIncorrecta, JUEGONUMEROS, pintarMatrizIncorrecta},
         {JUEGONUMEROS, matrizPulsadaCorrecta, ESPERANUMEROS, pintarMatrizCorrecta},
@@ -101,11 +103,12 @@ void loop() {
         {JUEGOLETRAS, matrizPulsadaCorrecta, ESPERALETRAS, pintarMatrizCorrecta},
         {ESPERALETRAS, tiempoCumplido, JUEGOLETRAS, initJuegoLetras},
         /* NUEVO JUEGO */
-        {ELECCION, nuevoJuego, ELECCION, initEleccion},
-        {JUEGONUMEROS, nuevoJuego, ELECCION, initEleccion},
-        {ESPERANUMEROS, nuevoJuego, ELECCION, initEleccion},
-        {JUEGOLETRAS, nuevoJuego, ELECCION, initEleccion},
-        {ESPERALETRAS, nuevoJuego, ELECCION, initEleccion},
+        {ELECCIONLENGUAJE, nuevoJuego, ELECCIONLENGUAJE, initEleccionLenguaje},
+        {ELECCIONJUEGO, nuevoJuego, ELECCIONLENGUAJE, initEleccionLenguaje},
+        {JUEGONUMEROS, nuevoJuego, ELECCIONLENGUAJE, initEleccionLenguaje},
+        {ESPERANUMEROS, nuevoJuego, ELECCIONLENGUAJE, initEleccionLenguaje},
+        {JUEGOLETRAS, nuevoJuego, ELECCIONLENGUAJE, initEleccionLenguaje},
+        {ESPERALETRAS, nuevoJuego, ELECCIONLENGUAJE, initEleccionLenguaje},
         {-1, NULL, -1, NULL}
     };
 
@@ -183,6 +186,24 @@ refrescarMatrices(fsm_data_t data){
 static int
 siempre1(fsm_t* fsm){
     return 1;
+}
+
+static int
+lenguajeElegido(fsm_t* fsm){
+    fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
+    int res = 0;
+
+    noInterrupts();
+    if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[0].numBoton){
+        fsm_data->lenguaje = ESPANOL;
+        res = 1;
+    } else if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[1].numBoton){
+        fsm_data->lenguaje = INGLES;
+        res = 1;
+    }
+    interrupts();
+
+    return res;
 }
 
 static int
@@ -277,9 +298,30 @@ nuevoJuego(fsm_t* fsm){
 
 /* Transition functions */
 static void
-initEleccion(fsm_t* fsm){
-    Serial.println("initEleccion");
+initEleccionLenguaje(fsm_t* fsm){
+    Serial.println("initEleccionLenguaje");
     fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
+
+    playNum(2,1);
+
+    fsm_data->matricesLED[0].caracterARepresentar = 1; // ESPAÑOL
+    fsm_data->matricesLED[1].caracterARepresentar = 2; // INGLES
+    fsm_data->matricesLED[2].caracterARepresentar = 0;
+    fsm_data->matricesLED[3].caracterARepresentar = 0;
+
+    cambiarEstadoMatrices(fsm_data);
+
+    noInterrupts();
+    fsm_data->flags.nuevoJuego = 0;
+    interrupts();
+}
+
+static void
+initEleccionJuego(fsm_t* fsm){
+    Serial.println("initEleccionJuego");
+    fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
+
+    playNum(1,fsm_data->lenguaje);
 
     fsm_data->matricesLED[0].caracterARepresentar = random(48,57);
     fsm_data->matricesLED[1].caracterARepresentar = random(65,90);
@@ -289,7 +331,7 @@ initEleccion(fsm_t* fsm){
     cambiarEstadoMatrices(fsm_data);
 
     noInterrupts();
-    fsm_data->flags.nuevoJuego = 0;
+    fsm_data->ultimoBotonPulsado = 0;
     interrupts();
 }
 
@@ -304,7 +346,7 @@ initJuegoNumeros(fsm_t* fsm){
     Serial.print(" que es el  ");
     Serial.println(fsm_data->caracterElegido - 48);
 
-    playNum(fsm_data->caracterElegido);
+    playNum(fsm_data->caracterElegido, fsm_data->lenguaje);
 
     int matriz = random(3);
     fsm_data->matrizCorrecta = matriz;
@@ -320,10 +362,16 @@ initJuegoNumeros(fsm_t* fsm){
             num = fsm_data->caracterElegido;
             fsm_data->matricesLED[i].caracterARepresentar = fsm_data->caracterElegido;
         } else{
-            do
-            {
-                num = random(48,57);
-            } while (std::find(std::begin(caracteresElegidos), std::end(caracteresElegidos), num) != std::end(caracteresElegidos));
+            #if defined(ESP32)
+                do
+                {
+                    num = random(48,57);
+                } while (std::find(std::begin(caracteresElegidos), std::end(caracteresElegidos), num) != std::end(caracteresElegidos));
+            #else
+                do{
+                    num = random(65,90);
+                } while(numeroNoRepetido(caracteresElegidos, num));
+            #endif
             fsm_data->matricesLED[i].caracterARepresentar = num;
         }
         caracteresElegidos[i] = num;
@@ -356,6 +404,8 @@ initJuegoLetras(fsm_t* fsm){
     Serial.print(" que es el  ");
     Serial.println(ascii);
 
+    playNum(fsm_data->caracterElegido, fsm_data->lenguaje);
+
     int matriz = random(3);
     fsm_data->matrizCorrecta = matriz;
 
@@ -370,10 +420,16 @@ initJuegoLetras(fsm_t* fsm){
             num = fsm_data->caracterElegido;
             fsm_data->matricesLED[i].caracterARepresentar = fsm_data->caracterElegido;
         } else{
-            do
-            {
-                num = random(65,90);
-            } while (std::find(std::begin(caracteresElegidos), std::end(caracteresElegidos), num) != std::end(caracteresElegidos));
+            #if defined(ESP32)
+                do
+                {
+                    num = random(65,90);
+                } while (std::find(std::begin(caracteresElegidos), std::end(caracteresElegidos), num) != std::end(caracteresElegidos));
+            #else
+                do{
+                    num = random(65,90);
+                } while(numeroNoRepetido(caracteresElegidos, num));
+            #endif
             fsm_data->matricesLED[i].caracterARepresentar = num;
         }
         Serial.print("Matriz ");
@@ -394,7 +450,7 @@ playCaracter(fsm_t* fsm){
     Serial.println("playCaracter");
     fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
 
-    playNum(fsm_data->caracterElegido);
+    playNum(fsm_data->caracterElegido, fsm_data->lenguaje);
 
     noInterrupts();
     fsm_data->flags.repetirCaracter = 0;
@@ -428,10 +484,11 @@ pintarMatrizIncorrecta(fsm_t* fsm){
 }
 
 void
-playNum(int num){
+playNum(int num, int language){
     Serial.print("Playing num ");
     Serial.println(num);
-    // myDFPlayer.play(num);
+
+    myDFPlayer.playFolder(language, num);
 }
 
 /*********************************************************************************************/
@@ -462,6 +519,10 @@ cambiarEstadoMatrices(fsm_data_t* fsm_data){
         Serial.println(ascii);
         if(caracterASCII == 0){
             csvName = "nada";
+        } else if(caracterASCII == 1){ // es la marca de español
+            csvName = "es";
+        } else if(caracterASCII == 2){ // es la marca de ingles
+            csvName = "en";
         } else if(caracterASCII >= 65){ // es una letra
             csvName = ascii + "mayus";
         } else{
@@ -510,4 +571,14 @@ rellenarMatrizPulsada(fsm_data_t* fsm_data){
             }
         }
     }
+}
+
+/*  Se comprueba que el numero no es igual al correcto ni se ha puesto en una matriz ya */
+int
+numeroNoRepetido(int elegidos[4], int num){
+    for(int i = 0; i < 4; i++){
+        if(num == elegidos[i])
+            return 1;
+    }
+    return 0;
 }

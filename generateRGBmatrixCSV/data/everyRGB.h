@@ -27,6 +27,7 @@
 #include Hminus.h
 #include Qminus.h
 #include Rmayus.h
+#include es.h
 #include numero8.h
 #include numero6.h
 #include Kminus.h
@@ -49,6 +50,7 @@
 #include Rminus.h
 #include Zmayus.h
 #include Fminus.h
+#include en.h
 #include Nmayus.h
 #include Umayus.h
 #include numero2.h

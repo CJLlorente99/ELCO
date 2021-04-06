@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <algorithm>
 #include "DFRobotDFPlayerMini.h"
 #include "CSV_Parser.h"
 
 #if defined(ESP32) 
     #include "HardwareSerial.h"
+    #include <algorithm>
 #else
     #include "SoftwareSerial.h"
     #include "SD.h"
@@ -35,10 +35,15 @@
 #define GROJO   0
 #define BROJO   0
 
+/*  Lenguajes */
+#define ESPANOL 1
+#define INGLES  2
+
 /*  Estados de la FSM */
 enum states{
     IDLE,
-    ELECCION,
+    ELECCIONLENGUAJE,
+    ELECCIONJUEGO,
     JUEGONUMEROS,
     ESPERANUMEROS,
     JUEGOLETRAS,
@@ -74,10 +79,12 @@ struct fsm_data_s{
     volatile int ultimoBotonPulsado;
     uint32_t timeout;
     matrizLED_t matricesLED[4];
+    int lenguaje;
 };
 
 /*  Instanciacion de todos las guardas y funciones de transición */
 static int siempre1(fsm_t* fsm);
+static int lenguajeElegido(fsm_t* fsm);
 static int juegoNumerosElegido(fsm_t* fsm);
 static int juegoLetrasElegido(fsm_t* fsm);
 static int repetirCaracter(fsm_t* fsm);
@@ -85,7 +92,8 @@ static int matrizPulsadaCorrecta(fsm_t* fsm);
 static int matrizPulsadaIncorrecta(fsm_t* fsm);
 static int tiempoCumplido(fsm_t* fsm);
 static int nuevoJuego(fsm_t* fsm);
-static void initEleccion(fsm_t* fsm);
+static void initEleccionJuego(fsm_t* fsm);
+static void initEleccionLenguaje(fsm_t* fsm);
 static void initJuegoNumeros(fsm_t* fsm);
 static void initJuegoLetras(fsm_t* fsm);
 static void playCaracter(fsm_t* fsm);

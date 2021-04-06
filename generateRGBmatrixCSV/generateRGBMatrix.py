@@ -21,7 +21,7 @@ if __name__ == "__main__":
     print(pathIn)
     files = os.listdir(args.folderIn)
     for file in files:
-        print('Starting dealind with ' + file)
+        print('Starting dealing with ' + file)
         img = Image.open(pathIn + str(file))
         with open(pathOut + '/' + file[:-4] + '.h', 'wt') as csvFile:
             csvFile.write('const char* ' + file[:-4] + ' = ')
