@@ -1,3 +1,5 @@
+#include "model.h"
+
 int XminusR[64] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 255, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 255, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int XminusG[64] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 255, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 255, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int XminusB[64] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 255, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 255, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -238,3 +240,216 @@ int numero3R[64] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 255, 0, 0,
 int numero3G[64] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 255, 0, 0, 255, 0, 0, 255, 0, 255, 0, 0, 255, 0, 0, 255, 0, 255, 0, 0, 255, 0, 0, 255, 0, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0};
 int numero3B[64] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 255, 0, 0, 255, 0, 0, 255, 0, 255, 0, 0, 255, 0, 0, 255, 0, 255, 0, 0, 255, 0, 0, 255, 0, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0};
 int numero3Brightness[64] = {255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255};
+
+caracter_t
+getRepresentacion(int caracter){
+    caracter_t res;
+    memset(&res, 0, sizeof(caracter_t));
+    int* red;
+    int* green;
+    int* blue;
+    int* brightness;
+
+    if(caracter == 0){
+        return res;
+    }   else if(caracter == 1){
+        red = esR;
+        green = esG;
+        blue = esB;
+        brightness = esBrightness;
+    }   else if(caracter == 2){
+        red = enR;
+        green = enG;
+        blue = enB;
+        brightness = enBrightness;
+    }   else if(caracter == 48){
+        red = numero0R;
+        green = numero0G;
+        blue = numero0B;
+        brightness = numero0Brightness;
+    }   else if(caracter == 49){
+        red = numero1R;
+        green = numero1G;
+        blue = numero1B;
+        brightness = numero1Brightness;
+    }   else if(caracter == 50){
+        red = numero2R;
+        green = numero2G;
+        blue = numero2B;
+        brightness = numero2Brightness;
+    }   else if(caracter == 51){
+        red = numero3R;
+        green = numero3G;
+        blue = numero3B;
+        brightness = numero3Brightness;
+    }   else if(caracter == 52){
+        red = numero4R;
+        green = numero4G;
+        blue = numero4B;
+        brightness = numero4Brightness;
+    }   else if(caracter == 53){
+        red = numero5R;
+        green = numero5G;
+        blue = numero5B;
+        brightness = numero5Brightness;
+    }   else if(caracter == 54){
+        red = numero6R;
+        green = numero6G;
+        blue = numero6B;
+        brightness = numero6Brightness;
+    }   else if(caracter == 55){
+        red = numero7R;
+        green = numero7G;
+        blue = numero7B;
+        brightness = numero7Brightness;
+    }   else if(caracter == 56){
+        red = numero8R;
+        green = numero8G;
+        blue = numero8B;
+        brightness = numero8Brightness;
+    }   else if(caracter == 57){
+        red = numero9R;
+        green = numero9G;
+        blue = numero9B;
+        brightness = numero9Brightness;
+    }   else if(caracter == 65){
+        red = AmayusR;
+        green = AmayusG;
+        blue = AmayusB;
+        brightness = AmayusBrightness;
+    }   else if(caracter == 66){
+        red = BmayusR;
+        green = BmayusG;
+        blue = BmayusB;
+        brightness = BmayusBrightness;
+    }   else if(caracter == 67){
+        red = CmayusR;
+        green = CmayusG;
+        blue = CmayusB;
+        brightness = CmayusBrightness;
+    }   else if(caracter == 68){
+        red = DmayusR;
+        green = DmayusG;
+        blue = DmayusB;
+        brightness = DmayusBrightness;
+    }   else if(caracter == 69){
+        red = EmayusR;
+        green = EmayusG;
+        blue = EmayusB;
+        brightness = EmayusBrightness;
+    }   else if(caracter == 70){
+        red = FmayusR;
+        green = FmayusG;
+        blue = FmayusB;
+        brightness = FmayusBrightness;
+    }   else if(caracter == 71){
+        red = GmayusR;
+        green = GmayusG;
+        blue = GmayusB;
+        brightness = GmayusBrightness;
+    }   else if(caracter == 72){
+        red = HmayusR;
+        green = HmayusG;
+        blue = HmayusB;
+        brightness = HmayusBrightness;
+    }   else if(caracter == 73){
+        red = ImayusR;
+        green = ImayusG;
+        blue = ImayusB;
+        brightness = ImayusBrightness;
+    }   else if(caracter == 74){
+        red = JmayusR;
+        green = JmayusG;
+        blue = JmayusB;
+        brightness = JmayusBrightness;
+    }   else if(caracter == 75){
+        red = KmayusR;
+        green = KmayusG;
+        blue = KmayusB;
+        brightness = KmayusBrightness;
+    }   else if(caracter == 76){
+        red = LmayusR;
+        green = LmayusG;
+        blue = LmayusB;
+        brightness = LmayusBrightness;
+    }   else if(caracter == 77){
+        red = MmayusR;
+        green = MmayusG;
+        blue = MmayusB;
+        brightness = MmayusBrightness;
+    }   else if(caracter == 78){
+        red = NmayusR;
+        green = NmayusG;
+        blue = NmayusB;
+        brightness = NmayusBrightness;
+    // }   else if(caracter == 79){
+    //     red = OmayusR;
+    //     green = OmayusG;
+    //     blue = OmayusB;
+    //     brightness = OmayusBrightness;
+    // }   else if(caracter == 80){
+    //     red = PmayusR;
+    //     green = PmayusG;
+    //     blue = PmayusB;
+    //     brightness = PmayusBrightness;
+    }   else if(caracter == 81){
+        red = QmayusR;
+        green = QmayusG;
+        blue = QmayusB;
+        brightness = QmayusBrightness;
+    }   else if(caracter == 82){
+        red = RmayusR;
+        green = RmayusG;
+        blue = RmayusB;
+        brightness = RmayusBrightness;
+    }   else if(caracter == 83){
+        red = SmayusR;
+        green = SmayusG;
+        blue = SmayusB;
+        brightness = SmayusBrightness;
+    }   else if(caracter == 84){
+        red = TmayusR;
+        green = TmayusG;
+        blue = TmayusB;
+        brightness = TmayusBrightness;
+    }   else if(caracter == 85){
+        red = UmayusR;
+        green = UmayusG;
+        blue = UmayusB;
+        brightness = UmayusBrightness;
+    }   else if(caracter == 86){
+        red = VmayusR;
+        green = VmayusG;
+        blue = VmayusB;
+        brightness = VmayusBrightness;
+    }   else if(caracter == 87){
+        red = WmayusR;
+        green = WmayusG;
+        blue = WmayusB;
+        brightness = WmayusBrightness;
+    }   else if(caracter == 88){
+        red = XmayusR;
+        green = XmayusG;
+        blue = XmayusB;
+        brightness = XmayusBrightness;
+    }   else if(caracter == 89){
+        red = YmayusR;
+        green = YmayusG;
+        blue = YmayusB;
+        brightness = YmayusBrightness;
+    }   else if(caracter == 90){
+        red = ZmayusR;
+        green = ZmayusG;
+        blue = ZmayusB;
+        brightness = ZmayusBrightness;
+    }
+
+    for(int i = 0; i < 64; i++){
+        res.red[i] = red[i];
+        res.green[i] = green[i];
+        res.blue[i] = blue[i];
+        res.brightness[i] = brightness[i];
+    }
+
+    return res;
+}

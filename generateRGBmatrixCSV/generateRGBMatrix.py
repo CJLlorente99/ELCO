@@ -18,42 +18,55 @@ if __name__ == "__main__":
 
     # Generate matrix for every file in folderIn
     pathIn = str(pathlib.Path(__file__).parent.absolute()) + '/' + args.folderIn
-    print(pathIn)
     files = os.listdir(args.folderIn)
-    for file in files:
-        print('Starting dealing with ' + file)
-        img = Image.open(pathIn + str(file))
-        with open(pathOut + '/' + file[:-4] + '.h', 'wt') as csvFile:
-            csvFile.write('const char* ' + file[:-4] + ' = ')
-            csvFile.write('"WIDTHINDEX,HEIGHTINDEX,BRIGHTNESS,RED,GREEN,BLUE\\n"\n')
-            for widthIndex in range(8):
-                for heightIndex in range(8):
-                    colors = img.getpixel((widthIndex, heightIndex))
-                    csvFile.write('"' + str(widthIndex) + ',' + str(heightIndex) + ',' + str(args.brightness) + ',' +str(colors[0]) + ',' + str(colors[1]) + ',' + str(colors[2]) + '\\n"\n') 
-            csvFile.write(';')
-        print('Finished with ' + file)
-
-    print('Writing everyRGB.h file')
-    with open(pathOut + '/everyRGB.h', 'wt') as f:
-        for file in files:
-            f.write('#include ' + file[:-4] + '.h\n')
-
-    print('everyRGB.h file written')
 
     # Other choice is to write everything in just one file
 
-    print('Writing allRGB.h file')
+    print('Writing allRGB.cpp file')
     with open(pathOut + '/allRGB.h', 'wt') as f:
         for file in files:
             img = Image.open(pathIn + str(file))
-            f.write('const char* ' + file[:-4] + ' = ')
-            f.write('"WIDTHINDEX,HEIGHTINDEX,BRIGHTNESS,RED,GREEN,BLUE\\n"\n')
+        
+            f.write('int ' + file[:-4] + 'R[64] = {')
             for widthIndex in range(8):
                 for heightIndex in range(8):
                     colors = img.getpixel((widthIndex, heightIndex))
-                    f.write('"' + str(widthIndex) + ',' + str(heightIndex) + ',' + str(args.brightness) + ',' + str(colors[0]) + ',' + str(colors[1]) + ',' + str(colors[2]) + '\\n"\n') 
+                    if(widthIndex == 7 and heightIndex == 7):
+                        f.write(str(abs(colors[0]-255)))
+                    else:
+                        f.write(str(abs(colors[0]-255)) + ', ')
+            f.write('};\n')
 
-            f.write(';\n')
+            f.write('int ' + file[:-4] + 'G[64] = {')
+            for widthIndex in range(8):
+                for heightIndex in range(8):
+                    colors = img.getpixel((widthIndex, heightIndex))
+                    if(widthIndex == 7 and heightIndex == 7):
+                        f.write(str(abs(colors[1]-255)))
+                    else:
+                        f.write(str(abs(colors[1]-255)) + ', ')
+            f.write('};\n')
+
+            f.write('int ' + file[:-4] + 'B[64] = {')
+            for widthIndex in range(8):
+                for heightIndex in range(8):
+                    colors = img.getpixel((widthIndex, heightIndex))
+                    if(widthIndex == 7 and heightIndex == 7):
+                        f.write(str(abs(colors[2]-255)))
+                    else:
+                        f.write(str(abs(colors[2]-255)) + ', ')
+            f.write('};\n') 
+
+            f.write('int ' + file[:-4] + 'Brightness[64] = {')
+            for widthIndex in range(8):
+                for heightIndex in range(8):
+                    colors = img.getpixel((widthIndex, heightIndex))
+                    if(widthIndex == 7 and heightIndex == 7):
+                        f.write(str(args.brightness))  
+                    else:
+                        f.write(str(args.brightness) + ', ')
+            f.write('};\n')
+
         print('Finished with ' + file)
 
-    print('allRGB.h file written')
+    print('allRGB.cpp file written')

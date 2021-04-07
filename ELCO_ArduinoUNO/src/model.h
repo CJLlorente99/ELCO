@@ -5,6 +5,7 @@
 #include <string.h>
 #include "DFRobotDFPlayerMini.h"
 #include "CSV_Parser.h"
+#include <Adafruit_NeoPixel.h>
 
 #if defined(ESP32) 
     #include "HardwareSerial.h"
@@ -39,6 +40,12 @@
 #define ESPANOL 1
 #define INGLES  2
 
+/*  Colores */
+#define LENCOLORES  2
+// const String[LENCOLORES] colores = {"AZUL",
+//                                     "AMARILLO"    
+// };
+
 /*  Estados de la FSM */
 enum states{
     IDLE,
@@ -47,13 +54,16 @@ enum states{
     JUEGONUMEROS,
     ESPERANUMEROS,
     JUEGOLETRAS,
-    ESPERALETRAS
+    ESPERALETRAS,
+    JUEGOCOLORES,
+    ESPERACOLORES
 };
 
 /*  Declaracion de tipos utiles */
 typedef struct fsm_data_s fsm_data_t;
 typedef struct flags_s flags_t;
 typedef struct matrizLED_s matrizLED_t;
+typedef struct caracter_s caracter_t;
 
 /*  Definicion de tipos utiles */
 struct flags_s{
@@ -62,12 +72,10 @@ struct flags_s{
 };
 
 struct matrizLED_s{
-    int32_t heightIndex[64];
-    int32_t widthIndex[64];
-    int32_t R[64];
-    int32_t G[64];
-    int32_t B[64];
-    int32_t brightness[64];
+    int R[64];
+    int G[64];
+    int B[64];
+    int brightness[64];
     int numBoton;
     int caracterARepresentar;
 };
@@ -82,11 +90,19 @@ struct fsm_data_s{
     int lenguaje;
 };
 
+struct caracter_s{
+    int red[64];
+    int green[64];
+    int blue[64];
+    int brightness[64];
+};
+
 /*  Instanciacion de todos las guardas y funciones de transición */
 static int siempre1(fsm_t* fsm);
 static int lenguajeElegido(fsm_t* fsm);
 static int juegoNumerosElegido(fsm_t* fsm);
 static int juegoLetrasElegido(fsm_t* fsm);
+static int juegoColoresElegido(fsm_t* fsm);
 static int repetirCaracter(fsm_t* fsm);
 static int matrizPulsadaCorrecta(fsm_t* fsm);
 static int matrizPulsadaIncorrecta(fsm_t* fsm);
@@ -96,6 +112,12 @@ static void initEleccionJuego(fsm_t* fsm);
 static void initEleccionLenguaje(fsm_t* fsm);
 static void initJuegoNumeros(fsm_t* fsm);
 static void initJuegoLetras(fsm_t* fsm);
+static void initJuegoColores(fsm_t* fsm);
 static void playCaracter(fsm_t* fsm);
 static void pintarMatrizCorrecta(fsm_t* fsm);
 static void pintarMatrizIncorrecta(fsm_t* fsm);
+static void pintarMatrizCorrectaColores(fsm_t* fsm);
+static void pintarMatrizIncorrectaColores(fsm_t* fsm);
+
+/*  Instantiacion de las funciones para cambiar el estado de las matrices */
+caracter_t getRepresentacion(int caracter);
