@@ -32,9 +32,15 @@ if __name__ == "__main__":
                 for heightIndex in range(8):
                     colors = img.getpixel((widthIndex, heightIndex))
                     if(widthIndex == 7 and heightIndex == 7):
-                        f.write(str(abs(colors[0]-255)))
+                        if(colors[3] == 0):
+                            f.write(str(0))
+                        else:
+                            f.write(str(abs(colors[0]-255)))
                     else:
-                        f.write(str(abs(colors[0]-255)) + ', ')
+                        if(colors[3] == 0):
+                            f.write(str(0) + ', ')
+                        else:
+                            f.write(str(abs(colors[0]-255)) + ', ')
             f.write('};\n')
 
             f.write('int ' + file[:-4] + 'G[64] = {')
@@ -42,9 +48,15 @@ if __name__ == "__main__":
                 for heightIndex in range(8):
                     colors = img.getpixel((widthIndex, heightIndex))
                     if(widthIndex == 7 and heightIndex == 7):
-                        f.write(str(abs(colors[1]-255)))
+                        if(colors[3] == 0):
+                            f.write(str(0))
+                        else:
+                            f.write(str(abs(colors[1]-255)))
                     else:
-                        f.write(str(abs(colors[1]-255)) + ', ')
+                        if(colors[3] == 0):
+                            f.write(str(0) + ', ')
+                        else:
+                            f.write(str(abs(colors[1]-255)) + ', ')
             f.write('};\n')
 
             f.write('int ' + file[:-4] + 'B[64] = {')
@@ -52,9 +64,15 @@ if __name__ == "__main__":
                 for heightIndex in range(8):
                     colors = img.getpixel((widthIndex, heightIndex))
                     if(widthIndex == 7 and heightIndex == 7):
-                        f.write(str(abs(colors[2]-255)))
+                        if(colors[3] == 0):
+                            f.write(str(0))
+                        else:
+                            f.write(str(abs(colors[2]-255)))
                     else:
-                        f.write(str(abs(colors[2]-255)) + ', ')
+                        if(colors[3] == 0):
+                            f.write(str(0) + ', ')
+                        else:
+                            f.write(str(abs(colors[2]-255)) + ', ')
             f.write('};\n') 
 
             f.write('int ' + file[:-4] + 'Brightness[64] = {')
