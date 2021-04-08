@@ -18,12 +18,32 @@ static DFRobotDFPlayerMini myDFPlayer;
 #define BOTONMATRIZ3    21
 #define BOTONMATRIZ4    19
 
-/* Numero de pixeles por matriz y pin adjudicado a cada una */
-#define PIN        15 // Este pin es el que puse para probar la matriz en arduino UNO, pero en el ESP32 variara
-#define NUMPIXELS 64
-#define BRIGHTNESS 10
+/*  Colores */
+const String colores[LENCOLORES] = {"ROJO",
+                                    "LIMA",
+                                    "AZUL",
+                                    "AMARILLO",
+                                    "CYAN",
+                                    "MAGENTA",
+                                    "GRIS",
+                                    "MARRON",
+                                    "OLIVA",
+                                    "VERDE",
+                                    "VIOLETA",
+};
 
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+/* Numero de pixeles por matriz y pin adjudicado a cada una */
+#define PIN1        15 // Este pin es el que puse para probar la matriz en arduino UNO, pero en el ESP32 variara
+#define PIN2        0
+#define PIN3        2
+#define PIN4        4
+#define NUMPIXELS 64
+#define BRIGHTNESS 5
+
+Adafruit_NeoPixel pixels1(NUMPIXELS, PIN1, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels2(NUMPIXELS, PIN2, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels3(NUMPIXELS, PIN3, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels4(NUMPIXELS, PIN4, NEO_GRB + NEO_KHZ800);
 
 /*  Declaracion de las ISR de los botones */
 static void repetirElegidoISR();
@@ -86,9 +106,21 @@ void setup() {
     attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ4), botonMatriz4ISR, FALLING);
 
     /* Added to implement LED matrix functionalities */
-    pixels.begin();           // INITIALIZE NeoPixel pixel object (REQUIRED)
-    pixels.show();            // Turn OFF all pixels ASAP
-    pixels.setBrightness(BRIGHTNESS);
+    pixels1.begin();           // INITIALIZE NeoPixel pixel object (REQUIRED)
+    pixels1.show();            // Turn OFF all pixels ASAP
+    pixels1.setBrightness(BRIGHTNESS);
+
+    pixels2.begin();           
+    pixels2.show();            
+    pixels2.setBrightness(BRIGHTNESS);
+
+    pixels3.begin();           
+    pixels3.show();            
+    pixels3.setBrightness(BRIGHTNESS);
+
+    pixels4.begin();           
+    pixels4.show();            
+    pixels4.setBrightness(BRIGHTNESS);
 }
 
 void loop() {
@@ -153,7 +185,7 @@ void loop() {
             lastMillisFSM = millis();
             fsm_fire(fsm);
         }
-        if(actMillis - lastMillisLED >= 1000){
+        if(actMillis - lastMillisLED >= 500){
             lastMillisLED = millis();
             refrescarMatrices(*fsm_data);
         }
@@ -195,16 +227,23 @@ botonMatriz4ISR(){
 void
 refrescarMatrices(fsm_data_t data){
     matrizLED_t* matrices = data.matricesLED;
-    int numMatriz = 0;
 
     for (int i = 0; i < NUMPIXELS; i++){
-        numMatriz = i / 64;
         if ((i / 8) % 2){
-            pixels.setPixelColor((((i / 8) + 1)*8 - i%8 - 1), pixels.Color(matrices[numMatriz].R[i], matrices[numMatriz].G[i], matrices[numMatriz].B[i]));
+            pixels1.setPixelColor((((i / 8) + 1)*8 - i%8 - 1), pixels1.Color(matrices[0].R[i], matrices[0].G[i], matrices[0].B[i]));
+            pixels2.setPixelColor((((i / 8) + 1)*8 - i%8 - 1), pixels2.Color(matrices[1].R[i], matrices[1].G[i], matrices[1].B[i]));
+            pixels3.setPixelColor((((i / 8) + 1)*8 - i%8 - 1), pixels3.Color(matrices[2].R[i], matrices[2].G[i], matrices[2].B[i]));
+            pixels4.setPixelColor((((i / 8) + 1)*8 - i%8 - 1), pixels4.Color(matrices[3].R[i], matrices[3].G[i], matrices[3].B[i]));
         } else {
-            pixels.setPixelColor(i, pixels.Color(matrices[numMatriz].R[i], matrices[numMatriz].G[i], matrices[numMatriz].B[i]));
+            pixels1.setPixelColor(i, pixels1.Color(matrices[0].R[i], matrices[0].G[i], matrices[0].B[i]));
+            pixels2.setPixelColor(i, pixels2.Color(matrices[1].R[i], matrices[1].G[i], matrices[1].B[i]));
+            pixels3.setPixelColor(i, pixels3.Color(matrices[2].R[i], matrices[2].G[i], matrices[2].B[i]));
+            pixels4.setPixelColor(i, pixels4.Color(matrices[3].R[i], matrices[3].G[i], matrices[3].B[i]));
         }
-        pixels.show();
+        pixels1.show();
+        pixels2.show();
+        pixels3.show();
+        pixels4.show();
     }
 }
 
@@ -232,6 +271,9 @@ lenguajeElegido(fsm_t* fsm){
         res = 1;
     } else if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[1].numBoton){
         fsm_data->lenguaje = INGLES;
+        res = 1;
+    } else if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[2].numBoton){
+        fsm_data->lenguaje = FRANCES;
         res = 1;
     }
     interrupts();
@@ -322,7 +364,7 @@ tiempoCumplido(fsm_t* fsm){
     fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
     int res = 0;
 
-    if(fsm_data->timeout >= millis()){
+    if(fsm_data->timeout <= millis()){
         res = 1;
     }
 
@@ -352,7 +394,7 @@ initEleccionLenguaje(fsm_t* fsm){
 
     fsm_data->matricesLED[0].caracterARepresentar = 1; // ESPAÑOL
     fsm_data->matricesLED[1].caracterARepresentar = 2; // INGLES
-    fsm_data->matricesLED[2].caracterARepresentar = 0;
+    fsm_data->matricesLED[2].caracterARepresentar = 3; // FRANCES
     fsm_data->matricesLED[3].caracterARepresentar = 0;
 
     cambiarEstadoMatrices(fsm_data);
@@ -371,7 +413,7 @@ initEleccionJuego(fsm_t* fsm){
 
     fsm_data->matricesLED[0].caracterARepresentar = random(48,57);
     fsm_data->matricesLED[1].caracterARepresentar = random(65,90);
-    fsm_data->matricesLED[2].caracterARepresentar = 0;
+    fsm_data->matricesLED[2].caracterARepresentar = random(10, 10+LENCOLORES-1);
     fsm_data->matricesLED[3].caracterARepresentar = 0;
 
     cambiarEstadoMatrices(fsm_data);
@@ -401,8 +443,7 @@ initJuegoNumeros(fsm_t* fsm){
     Serial.println(matriz);
 
     int num;
-    int caracteresElegidos[4];
-    memset(&caracteresElegidos, fsm_data->caracterElegido, 4*sizeof(int));
+    int caracteresElegidos[4] = {fsm_data->caracterElegido,fsm_data->caracterElegido,fsm_data->caracterElegido,fsm_data->caracterElegido};
     for(int i = 0; i < 4; i++){
         if(i == fsm_data->matrizCorrecta){
             num = fsm_data->caracterElegido;
@@ -459,8 +500,7 @@ initJuegoLetras(fsm_t* fsm){
     Serial.println(matriz);
 
     int num;
-    int caracteresElegidos[4];
-    memset(&caracteresElegidos, fsm_data->caracterElegido, 4*sizeof(int));
+    int caracteresElegidos[4] = {fsm_data->caracterElegido,fsm_data->caracterElegido,fsm_data->caracterElegido,fsm_data->caracterElegido};
     for(int i = 0; i < 4; i++){
         if(i == fsm_data->matrizCorrecta){
             num = fsm_data->caracterElegido;
@@ -478,6 +518,8 @@ initJuegoLetras(fsm_t* fsm){
             #endif
             fsm_data->matricesLED[i].caracterARepresentar = num;
         }
+        caracteresElegidos[i] = num;
+
         Serial.print("Matriz ");
         Serial.print(i);
         Serial.print(" caracter (ascii) ");
@@ -496,12 +538,12 @@ initJuegoColores(fsm_t* fsm){
     Serial.println("initJuegoLetras");
     fsm_data_t* fsm_data = (fsm_data_t*)fsm->user_data;
 
-    fsm_data->caracterElegido = random(10,10 + LENCOLORES);
+    fsm_data->caracterElegido = random(10,10 + LENCOLORES-1);
 
     Serial.print("Numero color elegido ");
     Serial.print(fsm_data->caracterElegido);
-    Serial.print(" Color elegido");
-    // Serial.println(colores[fsm_data->caracterElegido-10]);
+    Serial.print(" Color elegido ");
+    Serial.println(colores[fsm_data->caracterElegido-10]);
 
     playNum(fsm_data->caracterElegido, fsm_data->lenguaje);
 
@@ -512,8 +554,7 @@ initJuegoColores(fsm_t* fsm){
     Serial.println(matriz);
 
     int num;
-    int caracteresElegidos[4];
-    memset(&caracteresElegidos, fsm_data->caracterElegido, 4*sizeof(int));
+    int caracteresElegidos[4] = {fsm_data->caracterElegido,fsm_data->caracterElegido,fsm_data->caracterElegido,fsm_data->caracterElegido};
     for(int i = 0; i < 4; i++){
         if(i == fsm_data->matrizCorrecta){
             num = fsm_data->caracterElegido;
@@ -522,7 +563,7 @@ initJuegoColores(fsm_t* fsm){
             #if defined(ESP32)
                 do
                 {
-                    num = random(10,10 + LENCOLORES);
+                    num = random(10,10 + LENCOLORES-1);
                 } while (std::find(std::begin(caracteresElegidos), std::end(caracteresElegidos), num) != std::end(caracteresElegidos));
             #else
                 do{
@@ -531,10 +572,12 @@ initJuegoColores(fsm_t* fsm){
             #endif
             fsm_data->matricesLED[i].caracterARepresentar = num;
         }
+        caracteresElegidos[i] = num;
+
         Serial.print("Matriz ");
         Serial.print(i);
         Serial.print(" color ");
-        // Serial.println(colores[num-10]);
+        Serial.println(colores[num-10]);
     }
 
     cambiarEstadoMatrices(fsm_data);
@@ -636,17 +679,7 @@ cambiarEstadoMatrices(fsm_data_t* fsm_data){
         Serial.print(i);
         Serial.print(" ascii= ");
         Serial.println(ascii);
-        if(caracterASCII == 0){
-            csvName = "nada";
-        } else if(caracterASCII == 1){ // es la marca de español
-            csvName = "es";
-        } else if(caracterASCII == 2){ // es la marca de ingles
-            csvName = "en";
-        } else if(caracterASCII >= 65){ // es una letra
-            csvName = ascii + "mayus";
-        } else{
-            csvName = "numero" + ascii;
-        }
+
 
         caracter_t caracter;
         caracter = getRepresentacion(caracterASCII);
@@ -694,11 +727,22 @@ rellenarMatrizPulsadaColores(fsm_data_t* fsm_data){
     if(ultBoton != fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton){
         Serial.print("Apagando la matriz incorrecta ");
         Serial.println(fsm_data->matrizCorrecta);
-        memset(&fsm_data->matricesLED[fsm_data->matrizCorrecta].brightness, 0, 64*sizeof(int));
-    } else {
         for(int i = 0; i < 4; i++){
             if(ultBoton == fsm_data->matricesLED[i].numBoton){
                 Serial.print("Apagando todas las matrices menos la correcta ");
+                memset(&fsm_data->matricesLED[i].R, 0, 64*sizeof(int));
+                memset(&fsm_data->matricesLED[i].G, 0, 64*sizeof(int));
+                memset(&fsm_data->matricesLED[i].B, 0, 64*sizeof(int));
+                memset(&fsm_data->matricesLED[i].brightness, 0, 64*sizeof(int));
+            }
+        }
+    } else {
+        for(int i = 0; i < 4; i++){
+            if(ultBoton != fsm_data->matricesLED[i].numBoton){
+                Serial.print("Apagando todas las matrices menos la correcta ");
+                memset(&fsm_data->matricesLED[i].R, 0, 64*sizeof(int));
+                memset(&fsm_data->matricesLED[i].G, 0, 64*sizeof(int));
+                memset(&fsm_data->matricesLED[i].B, 0, 64*sizeof(int));
                 memset(&fsm_data->matricesLED[i].brightness, 0, 64*sizeof(int));
             }
         }

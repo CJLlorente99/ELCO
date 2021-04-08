@@ -17,7 +17,7 @@
 #endif
 
 /*  Tiempo que se muestra la matriz coloreada en verde antes de pasar a un nuevo juego */
-#define TIMEOUTCORRECTO     3000
+#define TIMEOUTCORRECTO     2000
 
 /*  En ESP32 se recomienda guardar los ISR en la memoria RAM en vez de en la flash */
 #if defined(ESP32) 
@@ -40,12 +40,10 @@
 /*  Lenguajes */
 #define ESPANOL 1
 #define INGLES  2
+#define FRANCES 3
 
 /*  Colores */
-#define LENCOLORES  2
-// const String[LENCOLORES] colores = {"AZUL",
-//                                     "AMARILLO"    
-// };
+#define LENCOLORES  11
 
 /*  Estados de la FSM */
 enum states{
