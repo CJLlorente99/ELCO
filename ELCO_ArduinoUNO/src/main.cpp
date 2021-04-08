@@ -205,14 +205,6 @@ refrescarMatrices(fsm_data_t data){
             pixels.setPixelColor(i, pixels.Color(matrices[numMatriz].R[i], matrices[numMatriz].G[i], matrices[numMatriz].B[i]));
         }
         pixels.show();
-
-        // for(int j = 0; j < 64; j++){
-        //     Serial.print(matrices[numMatriz].R[i]);
-        //     Serial.print(" ");
-        //     Serial.print(matrices[numMatriz].G[i]);
-        //     Serial.print(" ");
-        //     Serial.println(matrices[numMatriz].B[i]);
-        // }
     }
 }
 

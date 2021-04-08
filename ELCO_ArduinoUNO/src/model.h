@@ -6,6 +6,7 @@
 #include "DFRobotDFPlayerMini.h"
 #include "CSV_Parser.h"
 #include <Adafruit_NeoPixel.h>
+// #include <FastLED.h>
 
 #if defined(ESP32) 
     #include "HardwareSerial.h"
