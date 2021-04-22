@@ -189,6 +189,12 @@ void loop() {
             lastMillisLED = millis();
             refrescarMatrices(*fsm_data);
         }
+
+        if(millis() - lastMillisFSM < millis() - lastMillisLED){
+            delay(millis() - lastMillisFSM);
+        }   else{
+            delay(millis() - lastMillisLED);
+        }
     }
 }
 
