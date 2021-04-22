@@ -61,7 +61,7 @@ void rellenarMatrizPulsadaColores(fsm_data_t* fsm_data);
 void cambiarEstadoMatrices(fsm_data_t* fsm_data);
 int numeroNoRepetido(int elegidos[4], int num);
 
-static fsm_t* fsm;
+fsm_t* fsm;
 fsm_data_t* fsm_data;
 
 void setup() {
@@ -175,25 +175,27 @@ void loop() {
 
     // TODO
     // Creo que en esp32 se puede hacer con timers 
-    unsigned long lastMillisFSM = millis();
-    unsigned long lastMillisLED = millis();
+    unsigned long lastMillisFSM = micros();
+    unsigned long lastMillisLED = micros();
     unsigned long actMillis;
 
     while(1){
-        actMillis = millis();
-        if(actMillis - lastMillisFSM >= 200){
-            lastMillisFSM = millis();
+        actMillis = micros();
+        if(actMillis - lastMillisFSM >= 200000){
+            lastMillisFSM = micros();
             fsm_fire(fsm);
         }
-        if(actMillis - lastMillisLED >= 500){
-            lastMillisLED = millis();
+        if(actMillis - lastMillisLED >= 500000){
+            lastMillisLED = micros();
             refrescarMatrices(*fsm_data);
         }
 
-        if(millis() - lastMillisFSM < millis() - lastMillisLED){
-            delay(millis() - lastMillisFSM);
+        if(micros() - lastMillisFSM < micros() - lastMillisLED){
+            esp_sleep_enable_timer_wakeup(micros() - lastMillisFSM);
+            esp_light_sleep_start();
         }   else{
-            delay(millis() - lastMillisLED);
+            esp_sleep_enable_timer_wakeup(micros() - lastMillisLED);
+            esp_light_sleep_start();
         }
     }
 }
