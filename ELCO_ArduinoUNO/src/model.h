@@ -75,7 +75,8 @@ struct matrizLED_s{
     int G[64];
     int B[64];
     int brightness[64];
-    int numBoton;
+    int numBoton1;
+    int numBoton2;
     int caracterARepresentar;
 };
 

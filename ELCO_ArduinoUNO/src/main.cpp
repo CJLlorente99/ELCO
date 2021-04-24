@@ -11,12 +11,16 @@ static DFRobotDFPlayerMini myDFPlayer;
 
 /*  Numero de los GPIO de los botones
     Considerar que los botones deben poder ponerse en modo pullup */
-#define BOTONREPETIR    18
-#define BOTONNUEVOJUEGO 14
-#define BOTONMATRIZ1    23
-#define BOTONMATRIZ2    22
-#define BOTONMATRIZ3    21
-#define BOTONMATRIZ4    19
+#define BOTONREPETIR    19
+#define BOTONNUEVOJUEGO 18
+#define BOTONMATRIZ11   12
+#define BOTONMATRIZ12   14
+#define BOTONMATRIZ21   27
+#define BOTONMATRIZ22   26
+#define BOTONMATRIZ31   25
+#define BOTONMATRIZ32   33
+#define BOTONMATRIZ41   32
+#define BOTONMATRIZ42   35
 
 /*  Colores */
 const String colores[LENCOLORES] = {"ROJO",
@@ -38,7 +42,7 @@ const String colores[LENCOLORES] = {"ROJO",
 #define PIN3        2
 #define PIN4        4
 #define NUMPIXELS 64
-#define BRIGHTNESS 5
+#define BRIGHTNESS 30
 
 Adafruit_NeoPixel pixels1(NUMPIXELS, PIN1, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel pixels2(NUMPIXELS, PIN2, NEO_GRB + NEO_KHZ800);
@@ -48,10 +52,14 @@ Adafruit_NeoPixel pixels4(NUMPIXELS, PIN4, NEO_GRB + NEO_KHZ800);
 /*  Declaracion de las ISR de los botones */
 static void repetirElegidoISR();
 static void nuevoJuegoISR();
-static void botonMatriz1ISR();
-static void botonMatriz2ISR();
-static void botonMatriz3ISR();
-static void botonMatriz4ISR();
+static void botonMatriz11ISR();
+static void botonMatriz12ISR();
+static void botonMatriz21ISR();
+static void botonMatriz22ISR();
+static void botonMatriz31ISR();
+static void botonMatriz32ISR();
+static void botonMatriz41ISR();
+static void botonMatriz42ISR();
 
 /*  Declaracion de otras funciones que se utilizan */
 void refrescarMatrices(fsm_data_t data);
@@ -84,7 +92,7 @@ void setup() {
     }
     Serial.println(F("DFPlayer Mini online."));
 
-    myDFPlayer.volume(20);  //Set volume value. From 0 to 30
+    myDFPlayer.volume(30);  //Set volume value. From 0 to 30
 
     /*  Arrancar una semilla aleatoria */
     randomSeed(millis());
@@ -93,17 +101,25 @@ void setup() {
         Al estar en modo pullup el estado normal es nivel alto, bajando a nivel bajo cuando se presionen */
     pinMode(BOTONREPETIR, INPUT_PULLUP);
     pinMode(BOTONNUEVOJUEGO, INPUT_PULLUP);
-    pinMode(BOTONMATRIZ1, INPUT_PULLUP);
-    pinMode(BOTONMATRIZ2, INPUT_PULLUP);
-    pinMode(BOTONMATRIZ3, INPUT_PULLUP);
-    pinMode(BOTONMATRIZ4, INPUT_PULLUP);
+    pinMode(BOTONMATRIZ11, INPUT_PULLUP);
+    pinMode(BOTONMATRIZ12, INPUT_PULLUP);
+    pinMode(BOTONMATRIZ21, INPUT_PULLUP);
+    pinMode(BOTONMATRIZ22, INPUT_PULLUP);
+    pinMode(BOTONMATRIZ31, INPUT_PULLUP);
+    pinMode(BOTONMATRIZ32, INPUT_PULLUP);
+    pinMode(BOTONMATRIZ41, INPUT_PULLUP);
+    pinMode(BOTONMATRIZ42, INPUT_PULLUP);
 
     attachInterrupt(digitalPinToInterrupt(BOTONREPETIR), repetirElegidoISR, FALLING);
     attachInterrupt(digitalPinToInterrupt(BOTONNUEVOJUEGO), nuevoJuegoISR, FALLING);
-    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ1), botonMatriz1ISR, FALLING);
-    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ2), botonMatriz2ISR, FALLING);
-    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ3), botonMatriz3ISR, FALLING);
-    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ4), botonMatriz4ISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ11), botonMatriz11ISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ12), botonMatriz12ISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ21), botonMatriz21ISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ22), botonMatriz22ISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ31), botonMatriz31ISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ32), botonMatriz32ISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ41), botonMatriz41ISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(BOTONMATRIZ42), botonMatriz42ISR, FALLING);
 
     /* Added to implement LED matrix functionalities */
     pixels1.begin();           // INITIALIZE NeoPixel pixel object (REQUIRED)
@@ -129,14 +145,21 @@ void loop() {
     fsm_data = (fsm_data_t*)malloc(sizeof(fsm_data_t));
     memset(fsm_data, 0, sizeof(fsm_data_t));
 
-    fsm_data->matricesLED[0].numBoton = BOTONMATRIZ1;
-    fsm_data->matricesLED[1].numBoton = BOTONMATRIZ2;
-    fsm_data->matricesLED[2].numBoton = BOTONMATRIZ3;
-    fsm_data->matricesLED[3].numBoton = BOTONMATRIZ4;
+    fsm_data->matricesLED[0].numBoton1 = BOTONMATRIZ11;
+    fsm_data->matricesLED[0].numBoton2 = BOTONMATRIZ12;
+    fsm_data->matricesLED[1].numBoton1 = BOTONMATRIZ21;
+    fsm_data->matricesLED[1].numBoton2 = BOTONMATRIZ22;
+    fsm_data->matricesLED[2].numBoton1 = BOTONMATRIZ31;
+    fsm_data->matricesLED[2].numBoton2 = BOTONMATRIZ32;
+    fsm_data->matricesLED[3].numBoton1 = BOTONMATRIZ41;
+    fsm_data->matricesLED[3].numBoton2 = BOTONMATRIZ42;
 
     fsm_trans_t tt[] = {
         {IDLE, siempre1, ELECCIONLENGUAJE, initEleccionLenguaje},
+
         {ELECCIONLENGUAJE, lenguajeElegido, ELECCIONJUEGO, initEleccionJuego},
+        {ELECCIONLENGUAJE, repetirCaracter, ELECCIONLENGUAJE, initEleccionLenguaje},
+
         {ELECCIONJUEGO, juegoNumerosElegido, JUEGONUMEROS, initJuegoNumeros},
         {ELECCIONJUEGO, juegoLetrasElegido, JUEGOLETRAS, initJuegoLetras},
         {ELECCIONJUEGO, juegoColoresElegido, JUEGOCOLORES, initJuegoColores},
@@ -175,26 +198,40 @@ void loop() {
 
     // TODO
     // Creo que en esp32 se puede hacer con timers 
-    unsigned long lastMillisFSM = millis();
-    unsigned long lastMillisLED = millis();
-    unsigned long actMillis;
+    uint32_t lastMillisFSM = millis();
+    uint32_t lastMillisLED = millis();
+    uint32_t actMillis;
 
     while(1){
         actMillis = millis();
-        if(actMillis - lastMillisFSM >= 200){
+        if(actMillis - lastMillisFSM >= 525){
+            Serial.print("FSM ");
+            Serial.println(actMillis-lastMillisFSM);
             lastMillisFSM = millis();
             fsm_fire(fsm);
         }
-        if(actMillis - lastMillisLED >= 500){
+        if(actMillis - lastMillisLED >= 525){
+            Serial.print("LED ");
+            Serial.println(actMillis-lastMillisLED);
             lastMillisLED = millis();
             refrescarMatrices(*fsm_data);
         }
 
-        if(millis() - lastMillisFSM < millis() - lastMillisLED){
-            delay(millis() - lastMillisFSM);
-        }   else{
-            delay(millis() - lastMillisLED);
-        }
+        // Para valores menores de 525 no tiene sentido el light sleep (ni intentar hacer alguna accion para frecuencia mayores)
+        // if((actMillis-lastMillisFSM <= 1000)&&(actMillis-lastMillisLED <= 1000)){
+        //     if(actMillis-lastMillisLED < actMillis-lastMillisFSM){
+        //         esp_sleep_enable_timer_wakeup((actMillis-lastMillisLED)*1000);
+        //         Serial.print("Sleep time ");
+        //         Serial.println(actMillis-lastMillisLED);
+        //     } else{
+        //         Serial.print("Sleep time ");
+        //         Serial.println(actMillis-lastMillisFSM);
+        //         esp_sleep_enable_timer_wakeup((actMillis-lastMillisFSM)*1000);
+        //     }
+
+        //     esp_light_sleep_start();
+        //     Serial.println("Wakeup");
+        // }
     }
 }
 
@@ -210,23 +247,44 @@ nuevoJuegoISR(){
 }
 
 ISR_HEADER
-botonMatriz1ISR(){
-    fsm_data->ultimoBotonPulsado = BOTONMATRIZ1;
+botonMatriz11ISR(){
+    fsm_data->ultimoBotonPulsado = BOTONMATRIZ11;
 }
 
 ISR_HEADER
-botonMatriz2ISR(){
-    fsm_data->ultimoBotonPulsado = BOTONMATRIZ2;
+botonMatriz12ISR(){
+    fsm_data->ultimoBotonPulsado = BOTONMATRIZ12;
 }
 
 ISR_HEADER
-botonMatriz3ISR(){
-    fsm_data->ultimoBotonPulsado = BOTONMATRIZ3;
+botonMatriz21ISR(){
+    fsm_data->ultimoBotonPulsado = BOTONMATRIZ21;
 }
 
 ISR_HEADER
-botonMatriz4ISR(){
-    fsm_data->ultimoBotonPulsado = BOTONMATRIZ4;
+botonMatriz22ISR(){
+    fsm_data->ultimoBotonPulsado = BOTONMATRIZ22;
+}
+
+
+ISR_HEADER
+botonMatriz31ISR(){
+    fsm_data->ultimoBotonPulsado = BOTONMATRIZ31;
+}
+
+ISR_HEADER
+botonMatriz32ISR(){
+    fsm_data->ultimoBotonPulsado = BOTONMATRIZ32;
+}
+
+ISR_HEADER
+botonMatriz41ISR(){
+    fsm_data->ultimoBotonPulsado = BOTONMATRIZ41;
+}
+
+ISR_HEADER
+botonMatriz42ISR(){
+    fsm_data->ultimoBotonPulsado = BOTONMATRIZ42;
 }
 
 /*  Funcion para refrescar las matrices en base a lo que hay dentro de fsm_data */
@@ -272,13 +330,13 @@ lenguajeElegido(fsm_t* fsm){
     int res = 0;
 
     noInterrupts();
-    if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[0].numBoton){
+    if((fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[0].numBoton1)||(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[0].numBoton2)){
         fsm_data->lenguaje = ESPANOL;
         res = 1;
-    } else if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[1].numBoton){
+    } else if((fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[1].numBoton1)||(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[1].numBoton2)){
         fsm_data->lenguaje = INGLES;
         res = 1;
-    } else if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[2].numBoton){
+    } else if((fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[2].numBoton1)||(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[2].numBoton2)){
         fsm_data->lenguaje = FRANCES;
         res = 1;
     }
@@ -293,7 +351,7 @@ juegoNumerosElegido(fsm_t* fsm){
     int res = 0;
 
     noInterrupts();
-    if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[0].numBoton)
+    if((fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[0].numBoton1)||(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[0].numBoton2))
         res = 1;
     interrupts();
 
@@ -306,7 +364,7 @@ juegoLetrasElegido(fsm_t* fsm){
     int res = 0;
 
     noInterrupts();
-    if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[1].numBoton)
+    if((fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[1].numBoton1)||(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[1].numBoton2))
         res = 1;
     interrupts();
 
@@ -319,7 +377,7 @@ juegoColoresElegido(fsm_t* fsm){
     int res = 0;
 
     noInterrupts();
-    if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[2].numBoton)
+    if((fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[2].numBoton1)||(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[2].numBoton2))
         res = 1;
     interrupts();
 
@@ -345,7 +403,7 @@ matrizPulsadaCorrecta(fsm_t* fsm){
     int res = 0;
 
     noInterrupts();
-    if(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton)
+    if((fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton1)||(fsm_data->ultimoBotonPulsado == fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton2))
         res = 1;
     interrupts();
 
@@ -358,7 +416,7 @@ matrizPulsadaIncorrecta(fsm_t* fsm){
     int res = 0;
 
     noInterrupts();
-    if(fsm_data->ultimoBotonPulsado != fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton && fsm_data->ultimoBotonPulsado != 0)
+    if(((fsm_data->ultimoBotonPulsado != fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton1)&&(fsm_data->ultimoBotonPulsado != fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton2)) && fsm_data->ultimoBotonPulsado != 0)
         res = 1;
     interrupts();
 
@@ -407,6 +465,7 @@ initEleccionLenguaje(fsm_t* fsm){
 
     noInterrupts();
     fsm_data->flags.nuevoJuego = 0;
+    fsm_data->flags.repetirCaracter = 0;
     interrupts();
 }
 
@@ -703,7 +762,7 @@ void
 rellenarMatrizPulsada(fsm_data_t* fsm_data){
     int ultBoton = fsm_data->ultimoBotonPulsado;
 
-    if(ultBoton == fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton){
+    if((ultBoton == fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton1)||(ultBoton == fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton2)){
         Serial.print("Pintando de verde la matriz ");
         Serial.println(fsm_data->matrizCorrecta);
         memset(&fsm_data->matricesLED[fsm_data->matrizCorrecta].brightness, BRIGHTNESSVERDE, 64*sizeof(int));
@@ -712,7 +771,7 @@ rellenarMatrizPulsada(fsm_data_t* fsm_data){
         memset(&fsm_data->matricesLED[fsm_data->matrizCorrecta].B, BVERDE, 64*sizeof(int));
     } else {
         for(int i = 0; i < 4; i++){
-            if(ultBoton == fsm_data->matricesLED[i].numBoton){
+            if((ultBoton == fsm_data->matricesLED[i].numBoton1)||(ultBoton == fsm_data->matricesLED[i].numBoton2)){
                 Serial.print("Pintando de rojo la matriz ");
                 Serial.println(i);
                 memset(&fsm_data->matricesLED[i].brightness, BRIGHTNESSROJO, 64*sizeof(int));
@@ -730,21 +789,20 @@ void
 rellenarMatrizPulsadaColores(fsm_data_t* fsm_data){
     int ultBoton = fsm_data->ultimoBotonPulsado;
 
-    if(ultBoton != fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton){
+    if((ultBoton != fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton1)&&(ultBoton != fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton2)){
         Serial.print("Apagando la matriz incorrecta ");
         Serial.println(fsm_data->matrizCorrecta);
         for(int i = 0; i < 4; i++){
-            if(ultBoton == fsm_data->matricesLED[i].numBoton){
-                Serial.print("Apagando todas las matrices menos la correcta ");
+            if((ultBoton == fsm_data->matricesLED[i].numBoton1)||(ultBoton == fsm_data->matricesLED[i].numBoton2)){
                 memset(&fsm_data->matricesLED[i].R, 0, 64*sizeof(int));
                 memset(&fsm_data->matricesLED[i].G, 0, 64*sizeof(int));
                 memset(&fsm_data->matricesLED[i].B, 0, 64*sizeof(int));
                 memset(&fsm_data->matricesLED[i].brightness, 0, 64*sizeof(int));
             }
         }
-    } else {
+    } else if((ultBoton == fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton1)||(ultBoton == fsm_data->matricesLED[fsm_data->matrizCorrecta].numBoton2)){
         for(int i = 0; i < 4; i++){
-            if(ultBoton != fsm_data->matricesLED[i].numBoton){
+            if((ultBoton != fsm_data->matricesLED[i].numBoton1)&&(ultBoton != fsm_data->matricesLED[i].numBoton2)){
                 Serial.print("Apagando todas las matrices menos la correcta ");
                 memset(&fsm_data->matricesLED[i].R, 0, 64*sizeof(int));
                 memset(&fsm_data->matricesLED[i].G, 0, 64*sizeof(int));
