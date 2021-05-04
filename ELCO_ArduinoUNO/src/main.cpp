@@ -42,7 +42,7 @@ const String colores[LENCOLORES] = {"ROJO",
 #define PIN3        2
 #define PIN4        4
 #define NUMPIXELS 64
-#define BRIGHTNESS 50
+#define BRIGHTNESS 100
 
 Adafruit_NeoPixel pixels1(NUMPIXELS, PIN1, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel pixels2(NUMPIXELS, PIN2, NEO_GRB + NEO_KHZ800);
